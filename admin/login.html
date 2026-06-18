@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Iniciar sesión</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <div class="center-narrow" style="max-width:340px">
+      <h1 style="font-size:1.6rem; margin-top:60px">Panel administrativo</h1>
+      <div style="margin-top:24px">
+        <div class="field">
+          <label>Correo</label>
+          <input type="email" id="email" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="password" />
+        </div>
+        <div id="feedback"></div>
+        <button class="btn btn-block" id="login-btn" style="margin-top:8px">Ingresar</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/supabaseClient.js"></script>
+  <script>
+    // Si ya tiene sesión, va directo al panel.
+    db.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = "/admin/pedidos.html";
+    });
+
+    document.getElementById("login-btn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const feedback = document.getElementById("feedback");
+      const btn = document.getElementById("login-btn");
+
+      if (!email || !password) {
+        feedback.innerHTML = `<p class="error-text">Completa todos los campos.</p>`;
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Ingresando…";
+      feedback.innerHTML = "";
+
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) {
+        feedback.innerHTML = `<p class="error-text">Credenciales incorrectas.</p>`;
+        btn.disabled = false;
+        btn.textContent = "Ingresar";
+      } else {
+        window.location.href = "/admin/pedidos.html";
+      }
+    });
+  </script>
+</body>
+</html>

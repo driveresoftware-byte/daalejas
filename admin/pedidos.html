@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Pedidos</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <div id="nav"></div>
+    <div class="page-head">
+      <h1 style="font-size:1.5rem">Pedidos</h1>
+    </div>
+    <div id="content"><p class="muted">Cargando…</p></div>
+  </main>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/supabaseClient.js"></script>
+  <script src="/js/money.js"></script>
+  <script src="/js/admin/guard.js"></script>
+  <script src="/js/admin/common.js"></script>
+  <script>
+    async function init() {
+      const session = await requireAdminSession();
+      if (!session) return;
+
+      document.getElementById("nav").innerHTML = renderAdminNav("/admin/pedidos.html");
+
+      const { data, error } = await db
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(300);
+
+      const content = document.getElementById("content");
+
+      if (error) {
+        content.innerHTML = `<p class="error-text">Error cargando pedidos: ${error.message}</p>`;
+        return;
+      }
+      if (!data || data.length === 0) {
+        content.innerHTML = `<p class="muted">Todavía no hay pedidos.</p>`;
+        return;
+      }
+
+      const rows = data.map((order) => `
+        <tr>
+          <td style="font-size:0.75rem; color:rgba(28,20,16,0.5)">${order.reference}</td>
+          <td>
+            ${order.customer_name}
+            <div style="font-size:0.75rem; color:rgba(28,20,16,0.5)">${order.email}</div>
+          </td>
+          <td>${order.city || "—"}</td>
+          <td>${new Date(order.created_at).toLocaleDateString("es-CO")}</td>
+          <td>${formatCOP(order.total_cents)}</td>
+          <td class="${STATUS_CSS[order.status] || ""}">${STATUS_LABELS[order.status] || order.status}</td>
+        </tr>
+      `).join("");
+
+      content.innerHTML = `
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Referencia</th>
+                <th>Cliente</th>
+                <th>Ciudad</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    init();
+  </script>
+</body>
+</html>

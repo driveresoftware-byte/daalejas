@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Productos</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <div id="nav"></div>
+
+    <!-- LISTADO -->
+    <div id="list-view">
+      <div class="page-head">
+        <h1 style="font-size:1.5rem">Productos</h1>
+        <button class="btn" onclick="showForm()">
+          <span class="material-symbols-outlined">add</span> Nuevo producto
+        </button>
+      </div>
+      <div id="products-table"><p class="muted">Cargando…</p></div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div id="form-view" style="display:none">
+      <div class="page-head">
+        <h1 id="form-title" style="font-size:1.5rem">Nuevo producto</h1>
+        <button class="btn-text" onclick="showList()">
+          <span class="material-symbols-outlined">arrow_back</span> Volver
+        </button>
+      </div>
+
+      <div class="admin-form">
+        <input type="hidden" id="product-id" />
+        <div class="field">
+          <label>Nombre</label>
+          <input id="f-name" />
+        </div>
+        <div class="field">
+          <label>Slug (URL)</label>
+          <input id="f-slug" />
+        </div>
+        <div class="field">
+          <label>Descripción</label>
+          <textarea id="f-desc" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label>Categoría</label>
+          <input id="f-category" value="general" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Precio (COP)</label>
+            <input id="f-price" type="number" min="0" />
+          </div>
+          <div class="field">
+            <label>Precio antes de descuento (opcional)</label>
+            <input id="f-compare" type="number" min="0" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Stock</label>
+            <input id="f-stock" type="number" min="0" value="0" />
+          </div>
+          <div class="field" style="display:flex; align-items:flex-end; padding-bottom:6px">
+            <label class="checkbox-row">
+              <input type="checkbox" id="f-active" checked />
+              Visible en la tienda
+            </label>
+          </div>
+        </div>
+        <div class="field">
+          <label>URL de imagen (opcional)</label>
+          <input id="f-image" placeholder="https://..." />
+        </div>
+        <div id="form-feedback"></div>
+        <button class="btn" id="save-btn" style="margin-top:8px" onclick="saveProduct()">Guardar</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/supabaseClient.js"></script>
+  <script src="/js/money.js"></script>
+  <script src="/js/admin/guard.js"></script>
+  <script src="/js/admin/common.js"></script>
+  <script>
+    let products = [];
+
+    async function init() {
+      const session = await requireAdminSession();
+      if (!session) return;
+      document.getElementById("nav").innerHTML = renderAdminNav("/admin/productos.html");
+      await loadProducts();
+    }
+
+    async function loadProducts() {
+      const { data, error } = await db
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      const container = document.getElementById("products-table");
+
+      if (error) {
+        container.innerHTML = `<p class="error-text">Error cargando productos: ${error.message}</p>`;
+        return;
+      }
+      products = data || [];
+
+      if (products.length === 0) {
+        container.innerHTML = `<p class="muted">Todavía no hay productos. Crea el primero con el botón de arriba.</p>`;
+        return;
+      }
+
+      const rows = products.map((p) => `
+        <tr>
+          <td>${p.name}</td>
+          <td>${formatCOP(p.price_cents)}</td>
+          <td>${p.stock}</td>
+          <td>${p.active ? '<span class="status-paid">Activo</span>' : '<span class="muted">Oculto</span>'}</td>
+          <td>
+            <button class="btn-text" onclick="editProduct(${p.id})">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+            <button class="btn-text" onclick="deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </td>
+        </tr>
+      `).join("");
+
+      container.innerHTML = `
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function showList() {
+      document.getElementById("list-view").style.display = "";
+      document.getElementById("form-view").style.display = "none";
+    }
+
+    function showForm(product = null) {
+      document.getElementById("list-view").style.display = "none";
+      document.getElementById("form-view").style.display = "";
+      document.getElementById("form-feedback").textContent = "";
+      document.getElementById("form-title").textContent = product ? "Editar producto" : "Nuevo producto";
+
+      document.getElementById("product-id").value = product?.id ?? "";
+      document.getElementById("f-name").value = product?.name ?? "";
+      document.getElementById("f-slug").value = product?.slug ?? "";
+      document.getElementById("f-desc").value = product?.description ?? "";
+      document.getElementById("f-category").value = product?.category ?? "general";
+      document.getElementById("f-price").value = product ? centsToPesos(product.price_cents) : "";
+      document.getElementById("f-compare").value = product?.compare_at_price_cents ? centsToPesos(product.compare_at_price_cents) : "";
+      document.getElementById("f-stock").value = product?.stock ?? 0;
+      document.getElementById("f-active").checked = product?.active ?? true;
+      document.getElementById("f-image").value = product?.image_url ?? "";
+    }
+
+    function editProduct(id) {
+      const product = products.find((p) => p.id === id);
+      if (product) showForm(product);
+    }
+
+    // Auto-genera el slug al escribir el nombre (solo si es producto nuevo).
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("f-name").addEventListener("input", (e) => {
+        const idField = document.getElementById("product-id");
+        if (!idField.value) {
+          document.getElementById("f-slug").value = slugify(e.target.value);
+        }
+      });
+    });
+
+    async function saveProduct() {
+      const btn = document.getElementById("save-btn");
+      btn.disabled = true;
+      btn.textContent = "Guardando…";
+      setFeedback("form-feedback", "");
+
+      const id = document.getElementById("product-id").value;
+      const payload = {
+        name: document.getElementById("f-name").value.trim(),
+        slug: document.getElementById("f-slug").value.trim(),
+        description: document.getElementById("f-desc").value.trim(),
+        category: document.getElementById("f-category").value.trim() || "general",
+        price_cents: pesosToCents(document.getElementById("f-price").value),
+        compare_at_price_cents: document.getElementById("f-compare").value ? pesosToCents(document.getElementById("f-compare").value) : null,
+        stock: Number(document.getElementById("f-stock").value) || 0,
+        active: document.getElementById("f-active").checked,
+        image_url: document.getElementById("f-image").value.trim() || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (!payload.name || !payload.slug || !payload.price_cents) {
+        setFeedback("form-feedback", "Nombre, slug y precio son obligatorios.", true);
+        btn.disabled = false;
+        btn.textContent = "Guardar";
+        return;
+      }
+
+      let error;
+      if (id) {
+        ({ error } = await db.from("products").update(payload).eq("id", id));
+      } else {
+        payload.created_at = new Date().toISOString();
+        ({ error } = await db.from("products").insert(payload));
+      }
+
+      btn.disabled = false;
+      btn.textContent = "Guardar";
+
+      if (error) {
+        setFeedback("form-feedback", `Error: ${error.message}`, true);
+      } else {
+        await loadProducts();
+        showList();
+      }
+    }
+
+    async function deleteProduct(id, name) {
+      if (!confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`)) return;
+      const { error } = await db.from("products").delete().eq("id", id);
+      if (error) {
+        alert(`Error al eliminar: ${error.message}`);
+      } else {
+        await loadProducts();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

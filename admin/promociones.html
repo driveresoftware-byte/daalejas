@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Promociones</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <div id="nav"></div>
+
+    <!-- LISTADO -->
+    <div id="list-view">
+      <div class="page-head">
+        <h1 style="font-size:1.5rem">Promociones</h1>
+        <button class="btn" onclick="showForm()">
+          <span class="material-symbols-outlined">add</span> Nuevo código
+        </button>
+      </div>
+      <div id="promos-table"><p class="muted">Cargando…</p></div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div id="form-view" style="display:none">
+      <div class="page-head">
+        <h1 id="form-title" style="font-size:1.5rem">Nueva promoción</h1>
+        <button class="btn-text" onclick="showList()">
+          <span class="material-symbols-outlined">arrow_back</span> Volver
+        </button>
+      </div>
+
+      <div class="admin-form">
+        <input type="hidden" id="promo-id" />
+        <div class="field">
+          <label>Código</label>
+          <input id="f-code" style="text-transform:uppercase" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Tipo de descuento</label>
+            <select id="f-type">
+              <option value="percentage">Porcentaje (%)</option>
+              <option value="fixed">Monto fijo (COP)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label id="value-label">Valor (%)</label>
+            <input id="f-value" type="number" min="1" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Pedido mínimo (COP, opcional)</label>
+            <input id="f-min" type="number" min="0" value="0" />
+          </div>
+          <div class="field">
+            <label>Usos máximos (opcional)</label>
+            <input id="f-maxuses" type="number" min="1" placeholder="Sin límite" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Empieza (opcional)</label>
+            <input id="f-starts" type="datetime-local" />
+          </div>
+          <div class="field">
+            <label>Termina (opcional)</label>
+            <input id="f-ends" type="datetime-local" />
+          </div>
+        </div>
+        <div class="field">
+          <label class="checkbox-row">
+            <input type="checkbox" id="f-active" checked />
+            Activa
+          </label>
+        </div>
+        <div id="form-feedback"></div>
+        <button class="btn" style="margin-top:8px" onclick="savePromo()">Guardar</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/supabaseClient.js"></script>
+  <script src="/js/money.js"></script>
+  <script src="/js/admin/guard.js"></script>
+  <script src="/js/admin/common.js"></script>
+  <script>
+    let promos = [];
+
+    async function init() {
+      const session = await requireAdminSession();
+      if (!session) return;
+      document.getElementById("nav").innerHTML = renderAdminNav("/admin/promociones.html");
+
+      // Actualiza etiqueta del campo "valor" cuando cambia el tipo.
+      document.getElementById("f-type").addEventListener("change", updateValueLabel);
+
+      await loadPromos();
+    }
+
+    function updateValueLabel() {
+      const type = document.getElementById("f-type").value;
+      document.getElementById("value-label").textContent = type === "percentage" ? "Valor (%)" : "Valor (COP)";
+    }
+
+    async function loadPromos() {
+      const { data, error } = await db
+        .from("promotions")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      const container = document.getElementById("promos-table");
+
+      if (error) {
+        container.innerHTML = `<p class="error-text">Error cargando promociones: ${error.message}</p>`;
+        return;
+      }
+      promos = data || [];
+
+      if (promos.length === 0) {
+        container.innerHTML = `<p class="muted">Todavía no hay códigos de promoción.</p>`;
+        return;
+      }
+
+      const rows = promos.map((p) => {
+        const valueDisplay = p.type === "percentage"
+          ? `${p.value}%`
+          : formatCOP(p.value);
+        return `
+          <tr>
+            <td><strong>${p.code}</strong></td>
+            <td>${p.type === "percentage" ? "Porcentaje" : "Monto fijo"}</td>
+            <td>${valueDisplay}</td>
+            <td>${p.used_count}${p.max_uses ? ` / ${p.max_uses}` : ""}</td>
+            <td>${p.active ? '<span class="status-paid">Activa</span>' : '<span class="muted">Inactiva</span>'}</td>
+            <td>
+              <button class="btn-text" onclick="editPromo(${p.id})">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="btn-text" onclick="deletePromo(${p.id}, '${p.code}')">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th><th>Tipo</th><th>Descuento</th><th>Usos</th><th>Estado</th><th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function toDatetimeLocal(isoStr) {
+      if (!isoStr) return "";
+      return new Date(isoStr).toISOString().slice(0, 16);
+    }
+
+    function showList() {
+      document.getElementById("list-view").style.display = "";
+      document.getElementById("form-view").style.display = "none";
+    }
+
+    function showForm(promo = null) {
+      document.getElementById("list-view").style.display = "none";
+      document.getElementById("form-view").style.display = "";
+      document.getElementById("form-feedback").textContent = "";
+      document.getElementById("form-title").textContent = promo ? "Editar promoción" : "Nueva promoción";
+
+      document.getElementById("promo-id").value = promo?.id ?? "";
+      document.getElementById("f-code").value = promo?.code ?? "";
+      document.getElementById("f-type").value = promo?.type ?? "percentage";
+      document.getElementById("f-value").value = promo
+        ? (promo.type === "percentage" ? promo.value : centsToPesos(promo.value))
+        : "";
+      document.getElementById("f-min").value = promo?.min_order_cents ? centsToPesos(promo.min_order_cents) : 0;
+      document.getElementById("f-maxuses").value = promo?.max_uses ?? "";
+      document.getElementById("f-starts").value = toDatetimeLocal(promo?.starts_at);
+      document.getElementById("f-ends").value = toDatetimeLocal(promo?.ends_at);
+      document.getElementById("f-active").checked = promo?.active ?? true;
+      updateValueLabel();
+    }
+
+    function editPromo(id) {
+      const promo = promos.find((p) => p.id === id);
+      if (promo) showForm(promo);
+    }
+
+    async function savePromo() {
+      setFeedback("form-feedback", "");
+      const id = document.getElementById("promo-id").value;
+      const type = document.getElementById("f-type").value;
+      const rawValue = Number(document.getElementById("f-value").value);
+      const code = document.getElementById("f-code").value.trim().toUpperCase();
+
+      if (!code || !rawValue) {
+        setFeedback("form-feedback", "Código y valor son obligatorios.", true);
+        return;
+      }
+      if (type === "percentage" && (rawValue <= 0 || rawValue > 100)) {
+        setFeedback("form-feedback", "El porcentaje debe estar entre 1 y 100.", true);
+        return;
+      }
+
+      const payload = {
+        code,
+        type,
+        // Los porcentajes se guardan tal cual; los montos fijos se guardan en centavos.
+        value: type === "percentage" ? rawValue : pesosToCents(rawValue),
+        min_order_cents: pesosToCents(document.getElementById("f-min").value || 0),
+        max_uses: document.getElementById("f-maxuses").value ? Number(document.getElementById("f-maxuses").value) : null,
+        starts_at: document.getElementById("f-starts").value ? new Date(document.getElementById("f-starts").value).toISOString() : null,
+        ends_at: document.getElementById("f-ends").value ? new Date(document.getElementById("f-ends").value).toISOString() : null,
+        active: document.getElementById("f-active").checked,
+      };
+
+      let error;
+      if (id) {
+        ({ error } = await db.from("promotions").update(payload).eq("id", id));
+      } else {
+        ({ error } = await db.from("promotions").insert(payload));
+      }
+
+      if (error) {
+        setFeedback("form-feedback", `Error: ${error.message}`, true);
+      } else {
+        await loadPromos();
+        showList();
+      }
+    }
+
+    async function deletePromo(id, code) {
+      if (!confirm(`¿Eliminar el código "${code}"?`)) return;
+      const { error } = await db.from("promotions").delete().eq("id", id);
+      if (error) {
+        alert(`Error al eliminar: ${error.message}`);
+      } else {
+        await loadPromos();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

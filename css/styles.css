@@ -1,0 +1,504 @@
+/* ============================================================
+   Variables y reset
+   ============================================================ */
+:root {
+  --ink: #1c1410;
+  --cream: #f6efe6;
+  --wine: #4a1224;
+  --wine-deep: #330c18;
+  --gold: #b98b4e;
+  --blush: #d9a089;
+  --sage: #5c6b53;
+  --border: rgba(28, 20, 16, 0.12);
+  --font-display: "Fraunces", serif;
+  --font-body: "Work Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--wine);
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+  font-size: 20px;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+main.container {
+  min-height: 60vh;
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+
+/* ============================================================
+   Header / Footer
+   ============================================================ */
+#site-header {
+  background: var(--ink);
+  color: var(--cream);
+  border-bottom: 1px solid var(--border);
+}
+#site-header .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+#site-header .logo {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+}
+#site-header .logo em {
+  color: var(--gold);
+  font-style: italic;
+}
+#site-header nav {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+#site-header nav a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#site-header nav a:hover {
+  color: var(--gold);
+}
+.cart-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.75rem;
+}
+
+#site-footer {
+  margin-top: 60px;
+  border-top: 1px solid var(--border);
+  padding: 24px 20px;
+  font-size: 0.78rem;
+  color: rgba(28, 20, 16, 0.6);
+}
+
+/* ============================================================
+   Botones y formularios
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 2px;
+  padding: 11px 20px;
+  font-size: 0.9rem;
+  background: var(--wine);
+  color: var(--cream);
+  transition: background 0.15s ease;
+}
+.btn:hover {
+  background: var(--wine-deep);
+}
+.btn:disabled {
+  background: rgba(28, 20, 16, 0.2);
+  cursor: not-allowed;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--wine);
+  color: var(--wine);
+}
+.btn-outline:hover {
+  background: var(--wine);
+  color: var(--cream);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-text {
+  background: transparent;
+  color: rgba(28, 20, 16, 0.5);
+  padding: 4px;
+  font-size: 0.8rem;
+}
+.btn-text:hover {
+  color: var(--wine);
+}
+
+input, textarea, select {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+  border-radius: 1px;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+label {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(28, 20, 16, 0.6);
+  margin-bottom: 4px;
+}
+.field {
+  margin-bottom: 14px;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.error-text {
+  color: var(--wine);
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+.success-text {
+  color: var(--sage);
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+.muted {
+  color: rgba(28, 20, 16, 0.55);
+  font-size: 0.85rem;
+}
+
+/* ============================================================
+   Catálogo / Productos
+   ============================================================ */
+.hero {
+  max-width: 520px;
+  margin-bottom: 36px;
+}
+.hero p {
+  margin-top: 10px;
+  color: rgba(28, 20, 16, 0.7);
+  font-size: 0.92rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 16px;
+}
+.product-card {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.4);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+}
+.product-card .thumb {
+  aspect-ratio: 1 / 1;
+  background: rgba(28, 20, 16, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: rgba(28, 20, 16, 0.4);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.product-card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-card .category {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(74, 18, 36, 0.7);
+}
+.product-card h3 {
+  font-size: 1rem;
+  margin-top: 2px;
+}
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+.price-row .old {
+  text-decoration: line-through;
+  color: rgba(28, 20, 16, 0.4);
+  font-size: 0.8rem;
+}
+
+.product-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+@media (max-width: 640px) {
+  .product-detail {
+    grid-template-columns: 1fr;
+  }
+}
+.product-detail .thumb {
+  aspect-ratio: 1/1;
+  background: rgba(28, 20, 16, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(28, 20, 16, 0.4);
+  overflow: hidden;
+}
+.product-detail .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.qty-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+}
+.qty-control button {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  font-size: 1rem;
+}
+.qty-control span {
+  min-width: 32px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* ============================================================
+   Carrito / Checkout
+   ============================================================ */
+.cart-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cart-row .thumb {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  background: rgba(28, 20, 16, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.6rem;
+  color: rgba(28, 20, 16, 0.4);
+}
+.cart-row .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cart-row .info {
+  flex: 1;
+}
+.cart-row .info .name {
+  font-size: 0.9rem;
+}
+.cart-row .info .unit {
+  font-size: 0.75rem;
+  color: rgba(28, 20, 16, 0.55);
+}
+.cart-row .line-total {
+  width: 90px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 4px 0;
+}
+.summary-row.total {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--wine);
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+}
+@media (max-width: 720px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Tablas (panel admin)
+   ============================================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+thead {
+  border-bottom: 1px solid var(--border);
+}
+th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(28, 20, 16, 0.5);
+  padding: 8px 12px 8px 0;
+}
+td {
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid rgba(28, 20, 16, 0.06);
+}
+.status-pending { color: var(--gold); }
+.status-paid { color: var(--sage); }
+.status-failed { color: var(--wine); }
+.status-cancelled { color: rgba(28, 20, 16, 0.4); }
+
+/* ============================================================
+   Panel admin
+   ============================================================ */
+.admin-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.admin-nav .links {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+}
+.admin-nav .links a.active {
+  color: var(--wine);
+  font-weight: 600;
+}
+.admin-nav .links a:hover {
+  color: var(--wine);
+}
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.admin-form {
+  max-width: 480px;
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.checkbox-row input {
+  width: auto;
+}
+
+/* ============================================================
+   Age gate
+   ============================================================ */
+#age-gate {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 20, 16, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+#age-gate .box {
+  background: var(--cream);
+  border: 1px solid rgba(185, 139, 78, 0.3);
+  max-width: 360px;
+  padding: 32px;
+  text-align: center;
+}
+.seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--wine);
+  color: var(--wine);
+  position: relative;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+}
+.seal::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--wine);
+  opacity: 0.5;
+}
+
+.center-narrow {
+  max-width: 380px;
+  margin: 60px auto 0;
+  text-align: center;
+}

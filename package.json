@@ -1,0 +1,9 @@
+{
+  "name": "tienda-adultos-html",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tienda de bienestar sexual: HTML/CSS/JS plano + Supabase + funciones serverless de Vercel para el pago con Wompi.",
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}

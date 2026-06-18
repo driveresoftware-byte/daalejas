@@ -2,9 +2,10 @@
   "version": 2,
   "functions": {
     "api/**/*.js": {
-      "runtime": "vercel-node@20.x"
+      "runtime": "nodejs"
     }
-  },
+  }
+,
   "routes": [
     {
       "src": "/api/validate-promo",

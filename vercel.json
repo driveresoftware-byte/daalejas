@@ -1,31 +1,10 @@
 {
   "version": 2,
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs"
-    }
-  }
-,
   "routes": [
-    {
-      "src": "/api/validate-promo",
-      "dest": "/api/validate-promo.js"
-    },
-    {
-      "src": "/api/create-order",
-      "dest": "/api/create-order.js"
-    },
-    {
-      "src": "/api/order-status",
-      "dest": "/api/order-status.js"
-    },
-    {
-      "src": "/api/wompi-webhook",
-      "dest": "/api/wompi-webhook.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "/api/validate-promo", "dest": "/api/validate-promo.js" },
+    { "src": "/api/create-order", "dest": "/api/create-order.js" },
+    { "src": "/api/order-status", "dest": "/api/order-status.js" },
+    { "src": "/api/wompi-webhook", "dest": "/api/wompi-webhook.js" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
